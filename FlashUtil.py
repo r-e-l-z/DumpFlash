@@ -1,20 +1,23 @@
 from optparse import OptionParser
 from FlashFile import *
-from FlashDevice import *
 from DumpUBoot import *
 from ECC import *
 import os
 
 class FlashUtil:
-	def __init__(self, filename='', page_size=0x800, oob_size=0x40, page_per_block=0x40,slow=False):
+	def __init__(self, device='', filename='', page_size=0x800, oob_size=0x40, page_per_block=0x40,slow=False):
 		self.UseAnsi=False
 		self.UseSequentialMode=False
 		self.DumpProgress=True
 
 		if filename:
 			self.io = FlashFile(filename, page_size, oob_size, page_per_block)
-		else:
-			self.io = NandIO(slow)
+		elif device == 'BBB':
+                        from FlashDeviceBBB import *
+                        self.io = NandIOBBB(slow)
+                else:
+                        from FlashDeviceFtdi import *
+			self.io = NandIOFtdi(slow)
 		
 	def SetUseAnsi(self,use_ansi):
 		self.UseAnsi=use_ansi

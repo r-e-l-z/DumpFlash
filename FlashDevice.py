@@ -1,4 +1,3 @@
-from pyftdi.pyftdi.ftdi import *
 from array import array as Array
 import re
 import time
@@ -7,38 +6,38 @@ import pprint
 from DumpUBoot import *
 from ECC import *
 
-class NandIO:
-	ADR_CE=0x10
-	ADR_WP=0x20
-	ADR_CL=0x40
-	ADR_AL=0x80
+class NandIO(object):
+	ADR_CE = 0x10
+	ADR_WP = 0x20
+	ADR_CL = 0x40
+	ADR_AL = 0x80
 
-	NAND_CMD_READID=0x90
+	NAND_CMD_READID = 0x90
 
-	NAND_CMD_READ0=0
-	NAND_CMD_READ1=1
-	NAND_CMD_RNDOUT=5
-	NAND_CMD_PAGEPROG=0x10
-	NAND_CMD_READOOB=0x50
-	NAND_CMD_ERASE1=0x60
-	NAND_CMD_STATUS=0x70
-	NAND_CMD_STATUS_MULTI=0x71
-	NAND_CMD_SEQIN=0x80
-	NAND_CMD_RNDIN=0x85
-	NAND_CMD_READID=0x90
-	NAND_CMD_ERASE2=0xd0
-	NAND_CMD_PARAM=0xec
-	NAND_CMD_RESET=0xff
-	NAND_CMD_LOCK=0x2a
-	NAND_CMD_UNLOCK1=0x23
-	NAND_CMD_UNLOCK2=0x24
-	NAND_CMD_READSTART=0x30
-	NAND_CMD_RNDOUTSTART=0xE0
-	NAND_CMD_CACHEDPROG=0x15
-	NAND_CMD_ONFI=0xEC
-	NAND_CI_CHIPNR_MSK=0x03
-	NAND_CI_CELLTYPE_MSK=0x0C
-	NAND_CI_CELLTYPE_SHIFT=2
+	NAND_CMD_READ0         = 0
+	NAND_CMD_READ1         = 1
+	NAND_CMD_RNDOUT        = 5
+	NAND_CMD_PAGEPROG      = 0x10
+	NAND_CMD_READOOB       = 0x50
+	NAND_CMD_ERASE1        = 0x60
+	NAND_CMD_STATUS        = 0x70
+	NAND_CMD_STATUS_MULTI  = 0x71
+	NAND_CMD_SEQIN         = 0x80
+	NAND_CMD_RNDIN         = 0x85
+	NAND_CMD_READID        = 0x90
+	NAND_CMD_ERASE2        = 0xd0
+	NAND_CMD_PARAM         = 0xec
+	NAND_CMD_RESET         = 0xff
+	NAND_CMD_LOCK          = 0x2a
+	NAND_CMD_UNLOCK1       = 0x23
+	NAND_CMD_UNLOCK2       = 0x24
+	NAND_CMD_READSTART     = 0x30
+	NAND_CMD_RNDOUTSTART   = 0xE0
+	NAND_CMD_CACHEDPROG    = 0x15
+	NAND_CMD_ONFI          = 0xEC
+	NAND_CI_CHIPNR_MSK     = 0x03
+	NAND_CI_CELLTYPE_MSK   = 0x0C
+	NAND_CI_CELLTYPE_SHIFT = 2
 
 	NAND_STATUS_FAIL=(1<<0) # HIGH - FAIL,  LOW - PASS
 	NAND_STATUS_IDLE=(1<<5) # HIGH - IDLE,  LOW - ACTIVE
@@ -138,75 +137,35 @@ class NandIO:
 	def __init__(self, do_slow=False):
 		self.Slow=do_slow
 		self.UseAnsi=False
-		self.Ftdi = Ftdi()
-		self.Ftdi.open(0x0403,0x6010,interface=1)
-		self.Ftdi.set_bitmode(0, self.Ftdi.BITMODE_MCU)
-
-		if (self.Slow==True):
-			# Clock FTDI chip at 12MHz instead of 60MHz
-			self.Ftdi.write_data(Array('B', [Ftdi.ENABLE_CLK_DIV5]))
-		else:
-			self.Ftdi.write_data(Array('B', [Ftdi.DISABLE_CLK_DIV5]))
-
-		self.Ftdi.set_latency_timer(1)
-		self.Ftdi.purge_buffers()
-		self.Ftdi.write_data(Array('B', [Ftdi.SET_BITS_HIGH,0x0,0x1]))
+                self._setupDevice()
 		self.waitReady()
 		self.GetID()
 
-	def SetUseAnsi(self,use_ansi):
-		self.UseAnsi=use_ansi
+        def _notImplemented(self):
+                assert 0, "It must be impelemented in a child class"
 
-	def waitReady(self):
-		while 1:
-			self.Ftdi.write_data(Array('B', [Ftdi.GET_BITS_HIGH]))
-			data = self.Ftdi.read_data_bytes(1)
-			if data[0]&2==0x2:
-				return
-			else:
-				if self.Debug>0:
-					print 'Not Ready', data
+        # virtual functions
+        def _setupDevice(self):
+                self._notImplemented()
+
+        def waitReady(self):
+                self._notImplemented()
 		return
 
 	def nandRead(self,cl,al,count):
-		cmds=[]
-		cmd_type=0
-		if cl==1:
-			cmd_type|=self.ADR_CL
-		if al==1:
-			cmd_type|=self.ADR_AL
-
-		cmds+=[Ftdi.READ_EXTENDED, cmd_type, 0]
-
-		for i in range(1,count,1):
-			cmds+=[Ftdi.READ_SHORT, 0]
-
-		cmds.append(Ftdi.SEND_IMMEDIATE)
-		self.Ftdi.write_data(Array('B', cmds))
-		if (self.getSlow()):
-			data = self.Ftdi.read_data_bytes(count*2)
-			data = data[0:-1:2]
-		else:
-			data = self.Ftdi.read_data_bytes(count)
-		return data.tolist()
+                self._notImplemented()
 
 	def nandWrite(self,cl,al,data):
-		cmds=[]
-		cmd_type=0
-		if cl==1:
-			cmd_type|=self.ADR_CL
-		if al==1:
-			cmd_type|=self.ADR_AL
-		if not self.WriteProtect:
-			cmd_type|=self.ADR_WP
+                self._notImplemented()
 
-		cmds+=[Ftdi.WRITE_EXTENDED, cmd_type, 0, ord(data[0])]
-		for i in range(1,len(data),1):
-			#if i == 256:
-			#	cmds+=[Ftdi.WRITE_SHORT, 0, ord(data[i])]
-			cmds+=[Ftdi.WRITE_SHORT, 0, ord(data[i])]
-		self.Ftdi.write_data(Array('B', cmds))
+        def readSeq(self,pageno,remove_oob=False,raw_mode=False):
+                self._notImplemented()
 
+        # end virtual functions
+
+	def SetUseAnsi(self,use_ansi):
+		self.UseAnsi=use_ansi
+                
 	def sendCmd(self,cmd):
 		self.nandWrite(1,0,chr(cmd))
 
@@ -225,7 +184,7 @@ class NandIO:
 		return status
 
 	def readFlashData(self,count):
-		return self.nandRead(0,0,count)
+		return self.nandRead(0, 0, count)
 
 	def writeData(self,data):
 		return self.nandWrite(0,0,data)
@@ -238,6 +197,7 @@ class NandIO:
 		self.sendAddr(0,1)
 		id=self.readFlashData(8)
 
+                print "GetID: id = %s" % map(hex, id)
 		self.Name=''
 		self.ID=0
 		self.PageSize=0
@@ -475,41 +435,6 @@ class NandIO:
 			data+=chr(ch)
 		return data
 
-	def readSeq(self,pageno,remove_oob=False,raw_mode=False):
-		page=[]
-		self.sendCmd(self.NAND_CMD_READ0)
-		self.waitReady()
-		self.sendAddr(pageno<<8,self.AddrCycles)
-		self.waitReady()
-
-		bad_block=False
-
-		for i in range(0,self.PagePerBlock,1):
-			page_data = self.readFlashData(self.RawPageSize)
-
-			if i==0 or i==1:
-				if page_data[self.PageSize+5]!=0xff:
-					bad_block = True
-
-			if remove_oob:
-				page += page_data[0:self.PageSize]
-			else:
-				page += page_data
-
-			self.waitReady()
-
-		self.Ftdi.write_data(Array('B', [Ftdi.SET_BITS_HIGH,0x1,0x1]))
-		self.Ftdi.write_data(Array('B', [Ftdi.SET_BITS_HIGH,0x0,0x1]))
-
-		data=''
-
-		if bad_block and not raw_mode:
-			print '\nSkipping bad block at %d' % (pageno/self.PagePerBlock)
-		else:
-			for ch in page:
-				data+=chr(ch)
-
-		return data
 
 	def eraseBlockByPage(self,pageno):
 		self.WriteProtect=False

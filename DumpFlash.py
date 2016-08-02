@@ -8,6 +8,9 @@ parser = OptionParser()
 
 parser.add_option("-i", action="store_true", dest="information", default=False)
 
+parser.add_option("-d", dest="device", choices=['BBB', 'ftdi'], default='ftdi',
+                  help="Device type. One of 'BBB', 'ftdi' (default)")
+
 parser.add_option("-r", action="store_true", dest="read", default=False,
 				help="Read NAND Flash to a file")
 parser.add_option("-w", action="store_true", dest="write", default=False,
@@ -60,6 +63,7 @@ parser.add_option("-K", type="int", default=32, dest="pages_per_block")
 
 (options, args) = parser.parse_args()
 
+
 use_ansi=False
 try:
 	import colorama
@@ -80,7 +84,7 @@ if options.pages!=None:
 	if len(options.pages)>1:
 		end_page=options.pages[1]
 
-flash_util=FlashUtil(options.filename,options.page_size, options.oob_size, options.pages_per_block,options.slow)
+flash_util=FlashUtil(options.device, options.filename,options.page_size, options.oob_size, options.pages_per_block,options.slow)
 
 flash_util.SetUseAnsi(use_ansi)
 
