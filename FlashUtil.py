@@ -2,7 +2,8 @@ from optparse import OptionParser
 from FlashFile import *
 from DumpUBoot import *
 from ECC import *
-import os
+from FlashDeviceFtdi import NandIOFtdi
+import os, sys, time
 
 class FlashUtil:
 	def __init__(self, device='', filename='', page_size=0x800, oob_size=0x40, page_per_block=0x40,slow=False):
@@ -13,12 +14,20 @@ class FlashUtil:
 		if filename:
 			self.io = FlashFile(filename, page_size, oob_size, page_per_block)
 		elif device == 'BBB':
-                        from FlashDeviceBBB import *
+                        from FlashDeviceBBB import NandIOBBB
                         self.io = NandIOBBB(slow)
+		elif device == 'BBBmem':
+                        from FlashDeviceBBBmem import NandIOBBBmem
+                        self.io = NandIOBBBmem(slow)
                 else:
-                        from FlashDeviceFtdi import *
+
 			self.io = NandIOFtdi(slow)
 		
+
+        def __del__(self):
+                if self.io:
+                        del self.io
+
 	def SetUseAnsi(self,use_ansi):
 		self.UseAnsi=use_ansi
 		self.io.SetUseAnsi(use_ansi)

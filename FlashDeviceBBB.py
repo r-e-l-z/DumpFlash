@@ -19,16 +19,11 @@ class Ports:
         io = [d0, d1, d2, d3, d4, d5, d6, d7]
 
 class NandIOBBB(NandIO):
-
                 
-	def __init__(self, do_slow=False):
-                self.bbb = None
-                super(NandIOBBB, self).__init__(do_slow)
-
         def _setupDevice(self):
                 print "_setupDevice"
 
-
+                #setup ports
                 for d in Ports.io:
                         GPIO.setup(d,  GPIO.IN)
                 GPIO.setup(Ports._ce, GPIO.OUT)
@@ -37,13 +32,23 @@ class NandIOBBB(NandIO):
                 GPIO.setup(Ports.cle, GPIO.OUT)
                 GPIO.setup(Ports.ale, GPIO.OUT)
                 GPIO.setup(Ports.ry, GPIO.IN)
-
-                GPIO.output(Ports._ce, GPIO.LOW)
+                
+                #set initial port values
+                GPIO.output(Ports._ce, GPIO.HIGH)
                 GPIO.output(Ports.cle, GPIO.LOW)
                 GPIO.output(Ports.ale, GPIO.LOW)
                 GPIO.output(Ports._re, GPIO.HIGH)
                 GPIO.output(Ports._we, GPIO.HIGH)
 
+                #send reset device cmd
+                self.sendCmd(self.NAND_CMD_RESET)
+
+        def chipEnable(self):
+                GPIO.output(Ports._ce, GPIO.LOW)
+
+        def chipDisable(self):
+                GPIO.output(Ports._ce, GPIO.HIGH)
+                
         def waitReady(self):
                 while not GPIO.input(Ports.ry):
                         if self.Debug>0:
@@ -87,7 +92,7 @@ class NandIOBBB(NandIO):
 
 # note: data is received as a string???
 	def nandWrite(self, cl, al, data):
-                print "nandWrite: data %s" % data.encode('hex')
+                #print "nandWrite: data %s" % [hex(ord(d)) for d in  data]
                 assert cl == 0 or al == 0
                 cmd_port = -1
                 self.configIOwrite()
@@ -110,15 +115,16 @@ class NandIOBBB(NandIO):
                         GPIO.output(cmd_port, GPIO.LOW)
 
 	def nandRead(self, cl, al, numbytes):
-                print "nandRead: numbytes %d" % numbytes
+                #print "nandRead: numbytes %d" % numbytes
                 data = []
                 self.configIOread()
 
                 for i in range(numbytes):
                         d = self.readDataByte()
-                        print "nandRead: read byte 0x%x" % d
+                        # print "nandRead: read byte 0x%x" % d
                         data.append(d)
 
+                #print "nandRead: data %s" % map(hex, data)
                 return data
 
 	def __readSeq(self,pageno,remove_oob=False,raw_mode=False):

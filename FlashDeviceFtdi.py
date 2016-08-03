@@ -1,11 +1,11 @@
-from pyftdi.pyftdi.ftdi import *
+from pyftdi.ftdi import *
 from FlashDevice import NandIO
 
 class NandIOFtdi(NandIO):
 
 	def __init__(self, do_slow=False):
                 self.Ftdi = None
-                super(NandIOFTdi, self).__init__(do_slow)
+                super(NandIOFtdi, self).__init__(do_slow)
 
         def _setupDevice(self):
 		self.Ftdi = Ftdi()

@@ -138,8 +138,12 @@ class NandIO(object):
 		self.Slow=do_slow
 		self.UseAnsi=False
                 self._setupDevice()
+                self.chipEnable()
 		self.waitReady()
 		self.GetID()
+
+        def __del__(self):
+                self.chipDisable()
 
         def _notImplemented(self):
                 assert 0, "It must be impelemented in a child class"
@@ -161,15 +165,23 @@ class NandIO(object):
         def readSeq(self,pageno,remove_oob=False,raw_mode=False):
                 self._notImplemented()
 
+        def chipEnable(self):
+                pass
+
+        def chipDisable(self):
+                pass
+
         # end virtual functions
 
 	def SetUseAnsi(self,use_ansi):
 		self.UseAnsi=use_ansi
                 
-	def sendCmd(self,cmd):
+	def sendCmd(self, cmd):
+                #print "sendCmd: %#x" % cmd
 		self.nandWrite(1,0,chr(cmd))
 
-	def sendAddr(self,addr,count):
+	def sendAddr(self, addr, count):
+                #print "sendAddr: %#x" % addr
 		data=''
 
 		for i in range(0,count,1):
@@ -179,7 +191,7 @@ class NandIO(object):
 		self.nandWrite(0,1,data)
 
 	def Status(self):
-		self.sendCmd(0x70)
+		self.sendCmd(self.NAND_CMD_STATUS)
 		status=self.readFlashData(1)[0]
 		return status
 
@@ -187,7 +199,7 @@ class NandIO(object):
 		return self.nandRead(0, 0, count)
 
 	def writeData(self,data):
-		return self.nandWrite(0,0,data)
+		return self.nandWrite(0, 0, data)
 
 	def getSlow(self):
 		return self.Slow
@@ -195,9 +207,9 @@ class NandIO(object):
 	def GetID(self):
 		self.sendCmd(self.NAND_CMD_READID)
 		self.sendAddr(0,1)
-		id=self.readFlashData(8)
+		read_id = self.readFlashData(8)
 
-                print "GetID: id = %s" % map(hex, id)
+                print "GetID: read_id = %s" % map(hex, read_id)
 		self.Name=''
 		self.ID=0
 		self.PageSize=0
@@ -207,7 +219,7 @@ class NandIO(object):
 		self.AddrCycles=0
 
 		for device_description in self.DeviceDescriptions:
-			if device_description[1]==id[1]:
+			if device_description[1]==read_id[1]:
 				(self.Name,self.ID,self.PageSize,self.ChipSizeMB,self.EraseSize,self.Options,self.AddrCycles)=device_description
 
 		#Check ONFI
@@ -229,30 +241,30 @@ class NandIO(object):
 			else:
 				onfi=False
 
-	   	if id[0]==0x98:
+	   	if read_id[0]==0x98:
 			self.Manufacturer="Toshiba"
-		elif id[0]==0xec:
+		elif read_id[0]==0xec:
 			self.Manufacturer="Samsung"
-		elif id[0]==0x04:
+		elif read_id[0]==0x04:
 			self.Manufacturer="Fujitsu"
-		elif id[0]==0x8f:
+		elif read_id[0]==0x8f:
 			self.Manufacturer="National Semiconductors"
-		elif id[0]==0x07:
+		elif read_id[0]==0x07:
 			self.Manufacturer="Renesas"
-		if id[0]==0x20:
+		if read_id[0]==0x20:
 			self.Manufacturer="ST Micro"
-		if id[0]==0xad:
+		if read_id[0]==0xad:
 			self.Manufacturer="Hynix"
-		if id[0]==0x2c:
+		if read_id[0]==0x2c:
 			self.Manufacturer="Micron"
-		if id[0]==0x01:
+		if read_id[0]==0x01:
 			self.Manufacturer="AMD"
-		if id[0]==0xc2:
+		if read_id[0]==0xc2:
 			self.Manufacturer="Macronix"
 
 
 		idstr=''
-		for idbyte in id:
+		for idbyte in read_id:
 			idstr += "%X" % idbyte
 		if (idstr[0:4] == idstr[-4:]):
 			idstr = idstr[:-4]
@@ -260,9 +272,9 @@ class NandIO(object):
 				idstr = idstr[:-2]
 		self.IDString = idstr
 		self.IDLength = (len(idstr) / 2)
-		self.BitsPerCell = self.GetBitsPerCell(id[2])
+		self.BitsPerCell = self.GetBitsPerCell(read_id[2])
 		if self.PageSize==0:
-                        extid=id[3]
+                        extid=read_id[3]
 			if ((self.IDLength == 6) and (self.Manufacturer == "Samsung") and (self.BitsPerCell > 1)):
 				self.Pagesize = 2048 << (extid & 0x03)
 				extid >>= 2
@@ -310,7 +322,7 @@ class NandIO(object):
 				self.OOBSize = (8 << (extid & 0x01)) * (self.PageSize >> 9)
 				extid >>= 2
 				self.EraseSize = (64 * 1024) << (extid & 0x03)
-				if ((self.IDLength >= 6) and (self.Manufacturer == "Toshiba") and (self.BitsPerCell > 1) and ((id[5] & 0x7) == 0x6) and not (id[4] & 0x80)): Self.OOBSize = 32 * Self.PageSize >> 9
+				if ((self.IDLength >= 6) and (self.Manufacturer == "Toshiba") and (self.BitsPerCell > 1) and ((read_id[5] & 0x7) == 0x6) and not (read_id[4] & 0x80)): Self.OOBSize = 32 * Self.PageSize >> 9
 		else:
 			self.OOBSize = self.PageSize / 32
 

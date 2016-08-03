@@ -8,8 +8,8 @@ parser = OptionParser()
 
 parser.add_option("-i", action="store_true", dest="information", default=False)
 
-parser.add_option("-d", dest="device", choices=['BBB', 'ftdi'], default='ftdi',
-                  help="Device type. One of 'BBB', 'ftdi' (default)")
+parser.add_option("-d", dest="device", choices=['BBB', 'BBBmem', 'ftdi'], default='ftdi',
+                  help="Device type. One of 'BBB', 'BBBmem', 'ftdi' (default)")
 
 parser.add_option("-r", action="store_true", dest="read", default=False,
 				help="Read NAND Flash to a file")
@@ -195,3 +195,6 @@ if options.find_jffs2:
 
 if options.dump_jffs2:
 	flash_util.DumpJFFS2(options.name_prefix)
+
+
+del flash_util
